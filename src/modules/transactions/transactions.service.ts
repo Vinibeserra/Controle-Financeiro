@@ -9,6 +9,14 @@ interface CreateTransactionDTO {
   categoryId?: string;
 }
 
+interface ListTransactionsParams {
+    userId: string;
+    startDate?: Date;
+    endDate?: Date;
+    type?: "INCOME" | "EXPENSE";
+    categoryId?: string;
+}
+
 export class TransactionService {
     async create(data: CreateTransactionDTO) {
 
@@ -46,5 +54,33 @@ export class TransactionService {
             }
         });
         return transaction;
+    }
+}
+
+export class TransactionServiceUser {
+
+    async list({
+        userId,
+        startDate,
+        endDate,
+        type,
+        categoryId
+    }: ListTransactionsParams) {
+        return prisma.transaction.findMany({
+            where: {
+                userId,
+                ...(type && { type }),
+                ...(categoryId && { categoryId }),
+                ...(startDate && endDate && {
+                    createdAt: {
+                        gte: startDate,
+                        lte: endDate
+                    }
+                })
+            },
+            orderBy: {
+                createdAt: "desc"
+            }
+        });
     }
 }

@@ -6,5 +6,6 @@ const transactionRouter = Router();
 const controller = new TransactionController();
 
 transactionRouter.post("/", authMiddleware, controller.create);
+transactionRouter.get("/", authMiddleware, controller.list);
 
 export { transactionRouter };
