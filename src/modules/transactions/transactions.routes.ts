@@ -7,5 +7,7 @@ const controller = new TransactionController();
 
 transactionRouter.post("/", authMiddleware, controller.create);
 transactionRouter.get("/", authMiddleware, controller.list);
+transactionRouter.put("/:id", authMiddleware, controller.update);
+transactionRouter.delete("/:id", authMiddleware, controller.delete);
 
 export { transactionRouter };
