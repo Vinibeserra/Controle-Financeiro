@@ -18,7 +18,7 @@ interface ListTransactionsParams {
 }
 
 interface UpdateTransactionParam {
-    userId?: string;
+    userId: string;
     transactionId: string;
     title?: string;
     amount?: number;
@@ -50,6 +50,10 @@ export class TransactionService {
 
             if (!category) {
                 throw new Error("Category not found for this user.");
+            }
+
+            if (category.type !== type) {
+                throw new Error(`Category type (${category.type}) does not match transaction type.`);
             }
         }
 
@@ -99,25 +103,45 @@ export class TransactionService {
         type,
         categoryId
     }: UpdateTransactionParam) {
-        const transaction = await prisma.transaction.updateMany({
+        const transaction = await prisma.transaction.findFirst({
             where: {
                 id: transactionId,
                 userId: userId
-            },
+            }
+        });
+
+        if (!transaction) {
+            throw new Error("Transaction not found or not authorized.");
+        }
+
+        const finalType = type ?? transaction.type;
+        const finalCategoryId = categoryId ?? transaction.categoryId;
+
+        if (finalCategoryId) {
+            const category = await prisma.category.findFirst({
+                where: {
+                    id: finalCategoryId,
+                    userId: userId
+                }
+            });
+
+            if (!category) {
+                throw new Error("Category not found for this user.");
+            }
+
+            if (category.type !== finalType) {
+                throw new Error(`Category type (${category.type}) does not match transaction type.`);
+            }
+        }
+
+        return prisma.transaction.updateMany({
+            where: { id: transactionId },
             data: {
                 ...(title && { title }),
                 ...(amount && { amount }),
                 ...(type && { type }),
                 ...(categoryId && { categoryId })
             }
-        });
-
-        if (transaction.count === 0) {
-            throw new Error("Transaction not found or not authorized.");
-        }
-
-        return prisma.transaction.findUnique({
-            where: { id: transactionId }
         });
     }
 
